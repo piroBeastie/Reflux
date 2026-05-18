@@ -72,8 +72,6 @@ export function ShaderAnimation() {
       ctx.clearRect(0, 0, w, h);
       const centerX = cx();
       const centerY = cy();
-      const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
-
       for (const l of lines) {
         l.x += Math.cos(l.angle) * l.speed;
         l.y += Math.sin(l.angle) * l.speed;
