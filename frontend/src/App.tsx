@@ -1,4 +1,4 @@
-import { Menu, X, Zap } from "lucide-react";
+import { CheckCircle2, Menu, X, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ShaderAnimation } from "@/components/ui/shader-lines";
 import { NewTestModal } from "@/components/NewTestModal";
@@ -15,7 +15,7 @@ function AppShell() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [menuOpen, setMenuOpen] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
-  const { error, setError, tools } = useApp();
+  const { error, setError, toast, tools } = useApp();
 
   const switchTab = (id: TabId) => {
     setActiveTab(id);
@@ -127,6 +127,16 @@ function AppShell() {
             <button type="button" onClick={() => setError(null)} className="text-red-300/60 hover:text-red-200">
               <X className="w-4 h-4" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-2 bg-emerald-500/15 border border-emerald-400/30 rounded-lg px-4 py-2.5 text-sm text-emerald-200 shadow-lg"
+               style={{ backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}>
+            <CheckCircle2 className="w-4 h-4 text-emerald-400/80 shrink-0" />
+            <span>{toast}</span>
           </div>
         </div>
       )}
