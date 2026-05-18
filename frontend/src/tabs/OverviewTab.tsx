@@ -1,5 +1,6 @@
 import { Activity, AlertTriangle, Box, ChevronUp, FileText, Loader2, Sparkles, Target, Wrench, Zap } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import gsap from "gsap";
 import { useApp, useActiveIssues, useSelectedWorkflow } from "@/context/AppContext";
 import { GlassMetric, GlassPanel, PrimaryButton, RecommendationCard, RunRow, SecondaryButton, StatusDot, ToolBar, TraceConnector, TraceStep } from "@/components/ui/glass";
 import { formatLatency, issueTypeLabel, scoreToStatus, stepToStatus, timeAgo, truncateTask } from "@/lib/format";
@@ -13,6 +14,21 @@ export function OverviewTab() {
   const [reportMarkdown, setReportMarkdown] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const animated = useRef(false);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el || loading || animated.current) return;
+    animated.current = true;
+    const children = Array.from(el.children) as HTMLElement[];
+    if (children.length === 0) return;
+    gsap.set(children, { opacity: 0, y: 20 });
+    gsap.to(children, {
+      opacity: 1, y: 0, duration: 0.5, stagger: 0.07,
+      ease: "power3.out", clearProps: "all",
+    });
+  }, [loading]);
 
   const activeRun = lastRun ?? null;
   const traceSteps = activeRun?.trace ?? selected?.trace ?? [];
@@ -54,7 +70,7 @@ export function OverviewTab() {
   }
 
   return (
-    <>
+    <div ref={containerRef}>
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <p className="text-white/70 text-[10px] md:text-xs font-mono uppercase tracking-[0.2em] mb-2">MCP Reliability Tester</p>
@@ -104,10 +120,7 @@ export function OverviewTab() {
           <GlassPanel className="lg:col-span-1">
             <div className="flex flex-col items-center justify-center py-4">
               <p className="text-[10px] text-white/55 font-mono uppercase tracking-wider mb-2">Readiness Score</p>
-              <div className="relative">
-                <p className="text-5xl md:text-6xl font-bold font-mono text-white/90">{activeScore}</p>
-                <span className="absolute -right-6 top-1 text-sm text-white/45">/100</span>
-              </div>
+              <AnimatedScore value={activeScore ?? 0} />
               <StatusDot status={scoreToStatus(activeScore)} />
               <p className="text-[11px] text-white/70 mt-2 text-center">
                 {activeCompleted !== null ? (activeCompleted ? "Task completed" : "Task failed") : ""}{activeMode ? ` · ${activeMode} mode` : ""}
@@ -161,7 +174,7 @@ export function OverviewTab() {
         </div>
       )}
 
-      {/* Actions bar — after a test */}
+      {/* Actions bar */}
       {hasResult && (
         <div className="flex flex-wrap gap-2 mb-6">
           <SecondaryButton
@@ -178,7 +191,7 @@ export function OverviewTab() {
         </div>
       )}
 
-      {/* Fix Report (inline, collapsible) */}
+      {/* Fix Report */}
       {reportOpen && reportMarkdown && (
         <GlassPanel className="mb-6">
           <div className="flex items-center justify-between mb-3">
@@ -206,9 +219,7 @@ export function OverviewTab() {
               {runtimeIssues.length === 0 ? (
                 <p className="text-[11px] text-white/70">No runtime issues</p>
               ) : (
-                runtimeIssues.slice(0, 8).map((issue, i) => (
-                  <IssueRow key={`r-${i}`} issue={issue} />
-                ))
+                runtimeIssues.slice(0, 8).map((issue, i) => <IssueRow key={`r-${i}`} issue={issue} />)
               )}
             </div>
           </GlassPanel>
@@ -220,9 +231,7 @@ export function OverviewTab() {
               {designIssues.length === 0 ? (
                 <p className="text-[11px] text-white/70">No design issues</p>
               ) : (
-                designIssues.slice(0, 8).map((issue, i) => (
-                  <IssueRow key={`d-${i}`} issue={issue} />
-                ))
+                designIssues.slice(0, 8).map((issue, i) => <IssueRow key={`d-${i}`} issue={issue} />)
               )}
             </div>
           </GlassPanel>
@@ -257,17 +266,13 @@ export function OverviewTab() {
             </p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {(evaluation.root_causes ?? []).map((rc, i) => (
-              <RecommendationCard key={`rc-${i}`} title={`Root Cause ${i + 1}`} desc={rc} />
-            ))}
-            {(evaluation.documentation_gaps ?? []).map((gap, i) => (
-              <RecommendationCard key={`gap-${i}`} title={`Doc Gap ${i + 1}`} desc={gap} />
-            ))}
+            {(evaluation.root_causes ?? []).map((rc, i) => <RecommendationCard key={`rc-${i}`} title={`Root Cause ${i + 1}`} desc={rc} />)}
+            {(evaluation.documentation_gaps ?? []).map((gap, i) => <RecommendationCard key={`gap-${i}`} title={`Doc Gap ${i + 1}`} desc={gap} />)}
           </div>
         </GlassPanel>
       )}
 
-      {/* Metrics row (when we have history but viewing a historical run) */}
+      {/* Metrics row */}
       {!hasResult && workflows.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
           <GlassMetric label="Test Runs" value={String(workflows.length)} sub="total" icon={<Box className="w-3.5 h-3.5" />} />
@@ -314,7 +319,29 @@ export function OverviewTab() {
           </GlassPanel>
         </div>
       )}
-    </>
+    </div>
+  );
+}
+
+/** Animated score counter 0 → value */
+function AnimatedScore({ value }: { value: number }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obj = { val: 0 };
+    gsap.to(obj, {
+      val: value,
+      duration: 1.2,
+      ease: "power2.out",
+      onUpdate: () => { el.textContent = String(Math.round(obj.val)); },
+    });
+  }, [value]);
+  return (
+    <div className="relative">
+      <p ref={ref} className="text-5xl md:text-6xl font-bold font-mono text-white/90">0</p>
+      <span className="absolute -right-6 top-1 text-sm text-white/45">/100</span>
+    </div>
   );
 }
 
@@ -332,14 +359,26 @@ function IssueRow({ issue }: { issue: { type: string; severity: string; tool?: s
 }
 
 function ScoreBreakdownBars({ breakdown }: { breakdown: ScoreBreakdown }) {
+  const ref = useRef<HTMLDivElement>(null);
   const items = [
     { label: "Runtime Success", score: breakdown.runtime_success, max: 40 },
     { label: "Parameter Clarity", score: breakdown.parameter_clarity, max: 30 },
     { label: "Documentation", score: breakdown.documentation, max: 20 },
     { label: "Stability", score: breakdown.stability, max: 10 },
   ];
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const bars = el.querySelectorAll<HTMLElement>("[data-target-width]");
+    bars.forEach((bar, i) => {
+      const target = bar.dataset.targetWidth || "0";
+      gsap.fromTo(bar, { width: "0%" }, { width: target, duration: 0.9, ease: "power2.out", delay: 0.2 + i * 0.1 });
+    });
+  }, [breakdown]);
+
   return (
-    <div className="space-y-3">
+    <div ref={ref} className="space-y-3">
       {items.map((item) => {
         const pct = Math.round((item.score / item.max) * 100);
         const color = pct >= 80 ? "bg-emerald-400/60" : pct >= 50 ? "bg-amber-400/60" : "bg-red-400/60";
@@ -350,7 +389,7 @@ function ScoreBreakdownBars({ breakdown }: { breakdown: ScoreBreakdown }) {
               <span className="font-mono text-white/55">{item.score}/{item.max}</span>
             </div>
             <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
-              <div className={`h-full rounded-full ${color} transition-all duration-700`} style={{ width: `${pct}%` }} />
+              <div data-target-width={`${pct}%`} className={`h-full rounded-full ${color}`} style={{ width: "0%" }} />
             </div>
           </div>
         );

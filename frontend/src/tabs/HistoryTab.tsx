@@ -93,7 +93,6 @@ function RunCard({ run, isExpanded, onToggle, onViewResults }: {
 
       {isExpanded && (
         <div className="mt-4 pt-4 border-t border-white/[0.06]">
-          {/* Score breakdown */}
           {run.score_breakdown && (
             <div className="grid grid-cols-4 gap-3 mb-4">
               {[
@@ -112,7 +111,6 @@ function RunCard({ run, isExpanded, onToggle, onViewResults }: {
             </div>
           )}
 
-          {/* Trace steps */}
           {run.trace && run.trace.length > 0 && (
             <div className="mb-4">
               <p className="text-[11px] text-white/55 font-mono mb-2">Trace</p>
@@ -130,7 +128,6 @@ function RunCard({ run, isExpanded, onToggle, onViewResults }: {
             </div>
           )}
 
-          {/* Issues */}
           {run.issues_detected && run.issues_detected.length > 0 && (
             <div className="mb-4">
               <p className="text-[11px] text-white/55 font-mono mb-2">{run.issues_detected.length} issues</p>
