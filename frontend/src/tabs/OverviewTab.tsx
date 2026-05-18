@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, Box, ChevronDown, ChevronUp, FileText, Loader2, Sparkles, Target, Wrench, Zap } from "lucide-react";
+import { Activity, AlertTriangle, Box, ChevronUp, FileText, Loader2, Sparkles, Target, Wrench, Zap } from "lucide-react";
 import { useState } from "react";
 import { useApp, useActiveIssues, useSelectedWorkflow } from "@/context/AppContext";
 import { GlassMetric, GlassPanel, PrimaryButton, RecommendationCard, RunRow, SecondaryButton, StatusDot, ToolBar, TraceConnector, TraceStep } from "@/components/ui/glass";
