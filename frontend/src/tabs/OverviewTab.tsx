@@ -24,10 +24,14 @@ export function OverviewTab() {
     const children = Array.from(el.children) as HTMLElement[];
     if (children.length === 0) return;
     gsap.set(children, { opacity: 0, y: 20 });
-    gsap.to(children, {
+    const tween = gsap.to(children, {
       opacity: 1, y: 0, duration: 0.5, stagger: 0.07,
       ease: "power3.out", clearProps: "all",
     });
+    const fallback = setTimeout(() => {
+      tween.progress(1);
+    }, 1500);
+    return () => clearTimeout(fallback);
   }, [loading]);
 
   const activeRun = lastRun ?? null;
